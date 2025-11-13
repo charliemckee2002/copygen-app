@@ -10,16 +10,17 @@ export default async function handler(req, res) {
 
   const prompt = `
   You are a marketing copy expert. For each product name below, write:
-
-  1️⃣ Tagline  
-  2️⃣ Description (1–2 sentences)  
-  3️⃣ 3 FAQs with answers  
+  1️⃣ Tagline
+  2️⃣ Description (1–2 sentences)
+  3️⃣ 3 FAQs with answers
   4️⃣ Thumbnail prompt idea (short visual concept)
-
   Product names: ${productNames.join(", ")}
   `;
 
   try {
+    console.log("🔑 Key found:", !!process.env.GROQ_API_KEY);
+    console.log("🧠 Prompt preview:", prompt.slice(0, 100));
+
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -27,16 +28,18 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "mixtral-8x7b-32768",
+        model: "llama3-8b-8192", // safer default model
         messages: [{ role: "user", content: prompt }],
       }),
     });
 
     const data = await response.json();
+    console.log("📦 API raw response:", JSON.stringify(data).slice(0, 400));
+
     const text = data?.choices?.[0]?.message?.content || "No text generated.";
     res.status(200).json({ text });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error calling GROQ API:", err);
     res.status(500).json({ message: "Error calling GROQ API." });
   }
 }
