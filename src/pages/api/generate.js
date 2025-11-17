@@ -28,7 +28,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192", // safer default model
+        model: "mixtral-8x7b-32768",   // ✅ WORKING GROQ MODEL
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -36,7 +36,12 @@ export default async function handler(req, res) {
     const data = await response.json();
     console.log("📦 API raw response:", JSON.stringify(data).slice(0, 400));
 
-    const text = data?.choices?.[0]?.message?.content || "No text generated.";
+    if (!data?.choices?.[0]?.message?.content) {
+      console.log("❌ No content returned", data);
+      return res.status(500).json({ message: "Groq returned no content." });
+    }
+
+    const text = data.choices[0].message.content;
     res.status(200).json({ text });
   } catch (err) {
     console.error("❌ Error calling GROQ API:", err);
